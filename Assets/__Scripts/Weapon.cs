@@ -219,7 +219,7 @@ public class Weapon : MonoBehaviour
                             Rigidbody rb = virtualProj.GetComponent<Rigidbody>();
                             if (rb != null)
                             {
-                                rb.velocity = Vector3.up * 200f;
+                                rb.linearVelocity = Vector3.up * 200f;
                             }
                         }
 
