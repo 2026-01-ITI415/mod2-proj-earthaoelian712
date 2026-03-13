@@ -114,24 +114,26 @@ public class Weapon : MonoBehaviour
 
     private void Fire()
     {
-        // If this.gameObject is inactive, return
-        if (!gameObject.activeInHierarchy) return;                         // i
-        // If it hasn’t been enough time between shots, return
-        if (Time.time < nextShotTime) return;                              // j
+        // 1. 安全检查
+        if (!gameObject.activeInHierarchy) return;
+
+        // --- 冷却判断 ---
+        // 注意：激光因为是每帧生成的，建议在 Main 面板把 Laser 的 delayBetweenShots 设为 0 或 0.05
+        if (Time.time < nextShotTime) return;
 
         ProjectileHero p;
         Vector3 vel = Vector3.up * def.velocity;
 
+        // --- 武器类型判断 ---
         switch (type)
-        {                                                      // k
+        {
             case eWeaponType.blaster:
                 p = MakeProjectile();
                 p.vel = vel;
                 break;
 
-            case eWeaponType.spread:                                         // l
-                p = MakeProjectile();
-                p.vel = vel;
+            case eWeaponType.spread:
+                p = MakeProjectile(); p.vel = vel;
                 p = MakeProjectile();
                 p.transform.rotation = Quaternion.AngleAxis(10, Vector3.back);
                 p.vel = p.transform.rotation * vel;
@@ -139,13 +141,97 @@ public class Weapon : MonoBehaviour
                 p.transform.rotation = Quaternion.AngleAxis(-10, Vector3.back);
                 p.vel = p.transform.rotation * vel;
                 p = MakeProjectile();
-                p.transform.rotation = Quaternion.AngleAxis(+20, Vector3.back);
+                p.transform.rotation = Quaternion.AngleAxis(20, Vector3.back);
                 p.vel = p.transform.rotation * vel;
                 p = MakeProjectile();
                 p.transform.rotation = Quaternion.AngleAxis(-20, Vector3.back);
                 p.vel = p.transform.rotation * vel;
                 break;
 
+            case eWeaponType.laser:
+                p = MakeProjectile();
+                if (p == null) break;
+
+                Destroy(p.gameObject, 0.05f);
+                LineRenderer lr = p.GetComponent<LineRenderer>();
+
+                if (lr != null)
+                {
+                    lr.useWorldSpace = true;
+                    lr.positionCount = 2;
+
+                    // ==========================================
+                    // 🔫 新增：初始生成点控制核心代码
+                    // ==========================================
+                    // 你可以在这里自由调节激光的真正发射位置！
+                    // X轴(左右): 正数向右，负数向左
+                    // Y轴(上下): 正数向上(机头前方)，负数向下(机尾)
+                    // Z轴(深度): 保持为0
+                    Vector3 laserOffset = new Vector3(0f, 0.8f, 0f);
+
+                    // 最终真正的发射点 = 原本的枪口位置 + 你的自定义偏移量
+                    Vector3 startPos = shotPointTrans.position + laserOffset;
+                    // ==========================================
+
+                    Vector3 endPos = startPos + Vector3.up * 50f;
+
+                    // 射线现在从你精准控制的 startPos 发射
+                    RaycastHit[] hits = Physics.RaycastAll(startPos, Vector3.up, 50f);
+
+                    RaycastHit validHit = new RaycastHit();
+                    bool foundTarget = false;
+                    float closestDist = 999f;
+
+                    foreach (RaycastHit h in hits)
+                    {
+                        // 过滤掉自己和自己的普通子弹
+                        if (h.collider.transform.root == this.transform.root) continue;
+                        if (h.collider.GetComponent<ProjectileHero>() != null) continue;
+
+                        if (h.distance < closestDist)
+                        {
+                            closestDist = h.distance;
+                            validHit = h;
+                            foundTarget = true;
+                        }
+                    }
+
+                    if (foundTarget)
+                    {
+                        endPos = validHit.point;
+
+                        GameObject virtualProj = Instantiate<GameObject>(def.projectilePrefab);
+
+                        // 隐形子弹稍微刺入敌人身体一点点，确保触发
+                        virtualProj.transform.position = validHit.point + Vector3.down * 0.2f;
+                        virtualProj.transform.localScale = new Vector3(3f, 3f, 3f);
+
+                        MeshRenderer[] renderers = virtualProj.GetComponentsInChildren<MeshRenderer>();
+                        foreach (MeshRenderer mr in renderers)
+                        {
+                            mr.enabled = false;
+                        }
+
+                        ProjectileHero pHero = virtualProj.GetComponent<ProjectileHero>();
+                        if (pHero != null)
+                        {
+                            pHero.type = eWeaponType.laser;
+                            Rigidbody rb = virtualProj.GetComponent<Rigidbody>();
+                            if (rb != null)
+                            {
+                                rb.velocity = Vector3.up * 200f;
+                            }
+                        }
+
+                        Destroy(virtualProj, 0.1f);
+                    }
+
+                    // LineRenderer 的起点和终点
+                    lr.SetPosition(0, startPos);
+                    lr.SetPosition(1, endPos);
+                }
+                p.vel = Vector3.zero;
+                break;
         }
     }
 

@@ -590,7 +590,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 60
   rollMult: -50
-  pitchMult: 50
+  pitchMult: 100
   projectilePrefab: {fileID: 8884485313326729009, guid: 93cdb1254cc5842aeb5402d7b9f73a99, type: 3}
   projectileSpeed: 40
   weapons:
@@ -766,17 +766,7 @@ MonoBehaviour:
     damagePerSec: 0
     delayBetweenShots: 0
     velocity: 50
-  - type: 5
-    letter: L
-    powerUpColor: {r: 0.9333334, g: 0.427451, b: 0.25882354, a: 1}
-    weaponModelPrefab: {fileID: 919132149155446097, guid: 0522e2d6add5631469273543744ebf7f, type: 3}
-    projectilePrefab: {fileID: 8884485313326729009, guid: e4675aafb6bb99f489e06960c866fe73, type: 3}
-    projectileColor: {r: 0.9333334, g: 0.427451, b: 0.25882354, a: 1}
-    damageOnHit: 0.05
-    damagePerSec: 0
-    delayBetweenShots: 0
-    velocity: 10
-  powerUpFrequency: 05000000010000000200000006000000
+  powerUpFrequency: 01000000010000000200000006000000
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
